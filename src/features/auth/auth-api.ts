@@ -2,6 +2,7 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import { Provider } from "next-auth/providers";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import GitHubProvider from "next-auth/providers/github";
+import OktaProvider from "next-auth/providers/okta";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { hashValue } from "./helpers";
 
@@ -43,6 +44,28 @@ const configureIdentityProvider = () => {
             // throws error without this - unsure of the root cause (https://stackoverflow.com/questions/76244244/profile-id-is-missing-in-google-oauth-profile-response-nextauth)
             id: profile.sub,
             isAdmin: adminEmails?.includes(profile.email.toLowerCase()) || adminEmails?.includes(profile.preferred_username.toLowerCase())
+          }
+          return newProfile;
+        }
+      })
+    );
+  }
+
+  if (
+    process.env.AUTH_OKTA_ID &&
+    process.env.AUTH_OKTA_SECRET &&
+    process.env.AUTH_OKTA_ISSUER
+  ) {
+    providers.push(
+      OktaProvider({
+        clientId: process.env.AUTH_OKTA_ID!,
+        clientSecret: process.env.AUTH_OKTA_SECRET!,
+        issuer: process.env.AUTH_OKTA_ISSUER!,
+        async profile(profile) {
+          const newProfile = {
+            ...profile,
+            id: profile.sub,
+            isAdmin: adminEmails?.includes(profile.email.toLowerCase())
           }
           return newProfile;
         }
