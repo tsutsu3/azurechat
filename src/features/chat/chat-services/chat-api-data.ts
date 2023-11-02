@@ -76,6 +76,7 @@ export const ChatAPIData = async (props: PromptGPTProps) => {
       ],
       model: process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME,
       stream: true,
+      max_tokens: 4000
     });
 
     const stream = OpenAIStream(response, {
