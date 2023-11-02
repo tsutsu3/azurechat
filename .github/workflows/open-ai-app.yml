@@ -41,8 +41,8 @@ jobs:
       - name: 📦 Package Next application
         run: |
           cd ./site-deploy
-          zip Nextjs-site.zip ./* .next -qr      
-          
+          zip Nextjs-site.zip ./* .next -qr
+
       - name: 🔍 Diagnostics
         run: |
           ls ./src
@@ -72,14 +72,30 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Set the build during deployment setting to false. This setting was added in the templates to all azd to work, but breaks deployment via webapps-deploy 
+      # Set the build during deployment setting to false. This setting was added in the templates to all azd to work, but breaks deployment via webapps-deploy
       - name: Azure CLI script
         uses: azure/CLI@v1
         with:
           inlineScript: |
             rg=$(az webapp list --query "[?name=='${{ secrets.AZURE_APP_SERVICE_NAME }}'].resourceGroup" --output tsv)
             echo Setting SCM_DO_BUILD_DURING_DEPLOYMENT=false on app service ${{ secrets.AZURE_APP_SERVICE_NAME }}
-            az webapp config appsettings set -n ${{ secrets.AZURE_APP_SERVICE_NAME }} -g $rg --settings SCM_DO_BUILD_DURING_DEPLOYMENT=false -o none
+            az webapp config appsettings set -n ${{ secrets.AZURE_APP_SERVICE_NAME }} -g $rg -o none \
+              --settings SCM_DO_BUILD_DURING_DEPLOYMENT=false \
+              --settings OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} \
+              --settings AZURE_OPENAI_API_INSTANCE_NAME=${{ secrets.AZURE_OPENAI_API_INSTANCE_NAME }} \
+              --settings AZURE_OPENAI_API_DEPLOYMENT_NAME=${{ secrets.AZURE_OPENAI_API_DEPLOYMENT_NAME }} \
+              --settings AZURE_OPENAI_API_VERSION=${{ secrets.AZURE_OPENAI_API_VERSION }} \
+              --settings AZURE_COSMOSDB_URI=${{ secrets.AZURE_COSMOSDB_URI }} \
+              --settings AZURE_COSMOSDB_KEY=${{ secrets.AZURE_COSMOSDB_KEY }} \
+              --settings AZURE_COSMOSDB_DB_NAME=${{ secrets.AZURE_COSMOSDB_DB_NAME }} \
+              --settings AZURE_COSMOSDB_CONTAINER_NAME=${{ secrets.AZURE_COSMOSDB_CONTAINER_NAME }} \
+              --settings ADMIN_EMAIL_ADDRESS=${{ secrets.ADMIN_EMAIL_ADDRESS }} \
+              --settings AUTH_OKTA_ID=${{ secrets.AUTH_OKTA_ID }} \
+              --settings AUTH_OKTA_SECRET=${{ secrets.AUTH_OKTA_SECRET }} \
+              --settings AUTH_OKTA_ISSUER=${{ secrets.AUTH_OKTA_ISSUER }} \
+              --settings NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }} \
+              --settings NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} \
+              --settings NODE_ENV=production
             echo Setting --startup-file=\"node server.js\" on app service ${{ secrets.AZURE_APP_SERVICE_NAME }}
             az webapp config set --startup-file="node server.js" -n ${{ secrets.AZURE_APP_SERVICE_NAME }} -g $rg -o none
             sleep 10
